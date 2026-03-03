@@ -16,19 +16,11 @@
   <body class="dashboard-body" data-page="upload-connect">
     <div class="dashboard-bg">
       <div class="flex min-h-screen">
-        <aside class="sidebar hidden w-64 flex-col px-6 py-6 text-sm lg:flex">
+        <!-- Static sidebar -->
+        <aside class="sidebar w-64 flex-col px-6 py-6 text-sm">
           <div class="flex items-center gap-3">
             <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600/90">
-              <svg
-                aria-hidden="true"
-                class="h-6 w-6 text-white"
-                fill="none"
-                stroke="currentColor"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                viewBox="0 0 24 24"
-              >
+              <svg aria-hidden="true" class="h-6 w-6 text-white" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
                 <path d="M17 20v-1a4 4 0 0 0-4-4h-1"></path>
                 <path d="M7 20v-1a4 4 0 0 1 4-4h1"></path>
                 <circle cx="9" cy="8" r="3"></circle>
@@ -40,22 +32,11 @@
               <p class="text-xs text-slate-400">Crowd analytics</p>
             </div>
           </div>
-
           <nav class="mt-10 space-y-2">
-            <a class="sidebar-link flex items-center gap-3 rounded-xl px-3 py-2" data-nav="dashboard" href="dashboard.html">
-              <span>Dashboard</span>
-            </a>
-            <a class="sidebar-link active flex items-center gap-3 rounded-xl px-3 py-2" data-nav="upload" href="upload-connect.html">
-              <span>Upload &amp; Connect</span>
-            </a>
-            <a class="sidebar-link flex items-center gap-3 rounded-xl px-3 py-2" data-nav="analytics" href="analytics.html">
-              <span>Analytics</span>
-            </a>
-            <a class="sidebar-link flex items-center gap-3 rounded-xl px-3 py-2" data-nav="settings" href="settings.html">
-              <span>Settings</span>
-            </a>
+            <a class="sidebar-link flex items-center gap-3 rounded-xl px-3 py-2" href="dashboard.html"><span>Dashboard</span></a>
+            <a class="sidebar-link flex items-center gap-3 rounded-xl px-3 py-2" href="live_camera.html"><span>Live Camera</span></a>
+            <a class="sidebar-link active flex items-center gap-3 rounded-xl px-3 py-2" href="upload-connect.html"><span>Upload</span></a>
           </nav>
-
           <div class="mt-auto pt-8 text-xs text-slate-400">
             <button class="flex items-center gap-2 text-slate-300" data-action="signout" type="button">
               <span>Sign Out</span>
@@ -65,13 +46,12 @@
 
         <main class="flex-1 px-6 py-6 lg:px-10">
           <header>
-            <h1 class="text-2xl font-semibold text-white">Add Media Source</h1>
-            <p class="text-sm text-slate-400">Upload footage or connect a live camera feed</p>
+            <h1 class="text-2xl font-semibold text-white">Upload Media</h1>
+            <p class="text-sm text-slate-400">Upload footage for analysis</p>
           </header>
 
           <div class="mt-6 flex flex-wrap gap-6 border-b border-slate-800" data-tabs="media-source">
             <button class="tab-link active" data-tab="upload" type="button">Upload Files</button>
-            <button class="tab-link" data-tab="connect" type="button">Connect Camera</button>
           </div>
 
           <section class="mt-6 dashboard-card p-6" data-section="file-upload">

@@ -1,14 +1,12 @@
-from flask import Blueprint, request, jsonify, send_file
+from flask import Blueprint, request, jsonify, send_file, current_app, Response
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from werkzeug.utils import secure_filename
 from models import db, Camera, Detection, Alert, Zone
-from detection_service import DetectionService
 from datetime import datetime, timedelta
 import os
 import json
 
 api_bp = Blueprint('api', __name__)
-detection_service = DetectionService()
 
 # Allowed file extensions
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'mp4', 'avi', 'mov', 'mkv'}
@@ -136,6 +134,105 @@ def get_recent_alerts():
     
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@api_bp.route('/stream/start', methods=['POST'])
+def start_stream():
+    """Start background stream service. Accepts JSON {"stream_url": "..."} or form data."""
+    data = None
+    try:
+        data = request.get_json(silent=True) or request.form
+    except Exception:
+        data = request.form
+
+    stream_url = None
+    if isinstance(data, dict):
+        stream_url = data.get('stream_url')
+    else:
+        # werkzeug ImmutableMultiDict
+        stream_url = data.get('stream_url') if data else None
+
+    if not stream_url:
+        return jsonify({'error': 'stream_url is required'}), 400
+
+    # If user provided host:port, try a sensible default path
+    if '://' not in stream_url:
+        stream_url = f'http://{stream_url}/video'
+
+    try:
+        from streaming import StreamService
+
+        # Stop existing stream if present
+        existing = getattr(current_app, 'streaming_service', None)
+        if existing:
+            try:
+                existing.stop()
+            except Exception:
+                pass
+
+        stream_service = StreamService(current_app.detection_service, stream_url)
+        current_app.streaming_service = stream_service
+        stream_service.start()
+
+        return jsonify({'message': 'stream started', 'source': stream_url}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@api_bp.route('/stream/stop', methods=['POST'])
+def stop_stream():
+    """Stop the running stream service if any."""
+    stream_service = getattr(current_app, 'streaming_service', None)
+    if not stream_service:
+        return jsonify({'message': 'not running'}), 200
+
+    try:
+        stream_service.stop()
+    except Exception:
+        pass
+
+    try:
+        delattr(current_app, 'streaming_service')
+    except Exception:
+        current_app.streaming_service = None
+
+    return jsonify({'message': 'stopped'}), 200
+
+
+@api_bp.route('/stream/status', methods=['GET'])
+def stream_status():
+    """Return current stream status and latest people count."""
+    stream_service = getattr(current_app, 'streaming_service', None)
+    if not stream_service:
+        return jsonify({'running': False, 'people_count': 0}), 200
+
+    return jsonify({
+        'running': True,
+        'source': getattr(stream_service, 'source_url', None),
+        'people_count': int(getattr(stream_service, 'latest_count', 0))
+    }), 200
+
+
+@api_bp.route('/stream/live')
+def live_stream():
+    """MJPEG stream of the live IP camera with YOLO annotations."""
+    stream_service = getattr(current_app, 'streaming_service', None)
+    if not stream_service:
+        return jsonify({'error': 'Stream not started on server'}), 400
+
+    return Response(stream_service.mjpeg_generator(), mimetype='multipart/x-mixed-replace; boundary=frame')
+
+
+@api_bp.route('/stream/count')
+def stream_count():
+    """Return latest detected people count and stream running status."""
+    stream_service = getattr(current_app, 'streaming_service', None)
+    if not stream_service:
+        return jsonify({'people_count': 0, 'running': False}), 200
+
+    return jsonify({
+        'people_count': int(getattr(stream_service, 'latest_count', 0)),
+        'running': True
+    }), 200
 
 @api_bp.route('/dashboard/cameras', methods=['GET'])
 @jwt_required()
@@ -304,8 +401,8 @@ def upload_image():
         filepath = os.path.join('uploads', 'images', f'{timestamp}_{filename}')
         file.save(filepath)
         
-        # Process with YOLOv8
-        result = detection_service.detect_persons(filepath)
+        # Process with YOLOv8 using the app's detection service
+        result = current_app.detection_service.detect_persons(filepath)
         
         # Check if processing failed
         if 'error' in result:
@@ -315,7 +412,7 @@ def upload_image():
         annotated_filename = f'processed_{timestamp}_{filename}'
         annotated_path = os.path.join('uploads', 'processed', annotated_filename)
         if 'annotated_image' in result:
-            detection_service.save_annotated_image(result['annotated_image'], annotated_path)
+            current_app.detection_service.save_annotated_image(result['annotated_image'], annotated_path)
         else:
             annotated_path = None
         
@@ -400,7 +497,7 @@ def upload_video():
         print("This may take a while for longer videos...")
         # Use frame_interval=5 for good balance of speed and accuracy
         # The code will apply detections to intermediate frames for smooth boxes
-        result = detection_service.process_video(filepath, output_path, frame_interval=5, conf_threshold=0.25)
+        result = current_app.detection_service.process_video(filepath, output_path, frame_interval=5, conf_threshold=0.25)
         
         # Check if processing failed
         if 'error' in result:

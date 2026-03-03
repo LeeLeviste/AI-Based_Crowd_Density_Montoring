@@ -30,6 +30,8 @@ socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
 
 # Initialize detection service
 detection_service = DetectionService()
+# attach to app so blueprints can access the same instance
+app.detection_service = detection_service
 
 # Register blueprints
 app.register_blueprint(auth_bp, url_prefix='/api/auth')
@@ -73,4 +75,5 @@ def handle_subscribe_dashboard():
 
 if __name__ == '__main__':
     init_db()
+    # Streams are started/stopped via API calls from the frontend (no interactive prompt)
     socketio.run(app, host='0.0.0.0', port=5000, debug=True)

@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CrowdSense - Live Camera</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="dashboard-body" data-page="live-camera">
+    <div class="dashboard-bg">
+      <div class="flex min-h-screen">
+        <!-- Static sidebar -->
+        <aside class="sidebar w-64 flex-col px-6 py-6 text-sm">
+          <div class="flex items-center gap-3">
+            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600/90">
+              <svg aria-hidden="true" class="h-6 w-6 text-white" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M17 20v-1a4 4 0 0 0-4-4h-1"></path>
+                <path d="M7 20v-1a4 4 0 0 1 4-4h1"></path>
+                <circle cx="9" cy="8" r="3"></circle>
+                <circle cx="16" cy="7" r="3"></circle>
+              </svg>
+            </div>
+            <div>
+              <p class="text-base font-semibold text-white">EventVision</p>
+              <p class="text-xs text-slate-400">Crowd analytics</p>
+            </div>
+          </div>
+          <nav class="mt-10 space-y-2">
+            <a class="sidebar-link flex items-center gap-3 rounded-xl px-3 py-2" href="dashboard.html"><span>Dashboard</span></a>
+            <a class="sidebar-link active flex items-center gap-3 rounded-xl px-3 py-2" href="live_camera.html"><span>Live Camera</span></a>
+            <a class="sidebar-link flex items-center gap-3 rounded-xl px-3 py-2" href="upload-connect.html"><span>Upload</span></a>
+          </nav>
+          <div class="mt-auto pt-8 text-xs text-slate-400">
+            <button class="flex items-center gap-2 text-slate-300" data-action="signout" type="button">
+              <span>Sign Out</span>
+            </button>
+          </div>
+        </aside>
+
+        <main class="flex-1 px-6 py-6 lg:px-10">
+          <header class="flex items-center justify-between">
+            <div>
+              <h1 class="text-2xl font-semibold text-white">Live Camera</h1>
+              <p class="text-sm text-slate-400">Live annotated feed and real-time people count</p>
+            </div>
+            <div>
+              <button id="refresh-stream" class="action-btn">Refresh</button>
+            </div>
+          </header>
+
+          <section class="mt-6">
+            <div class="dashboard-card p-4">
+              <div class="flex flex-col gap-4">
+                <div class="rounded-xl bg-slate-900/60 p-4">
+                  <div class="flex items-center justify-between mb-2">
+                    <p class="text-sm text-slate-400">Live Feed</p>
+                    <div class="text-xs text-slate-400">Source: Server MJPEG stream</div>
+                  </div>
+                  <div class="mt-2">
+                    <div class="flex items-center gap-2 mb-3">
+                      <input id="stream-url" type="text" placeholder="e.g. http://192.168.1.5:8080/video" class="w-full rounded p-2 bg-slate-800 text-white" />
+                      <button id="connect-btn" class="action-btn">Connect</button>
+                      <button id="disconnect-btn" class="action-btn">Disconnect</button>
+                    </div>
+                    <img id="live-stream" src="" alt="Live stream" class="w-full rounded-xl bg-black" style="max-height:720px; object-fit:cover;" />
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-4">
+                  <div class="dashboard-card p-4">
+                    <p class="text-xs text-slate-400">People Count</p>
+                    <p class="mt-2 text-2xl font-semibold text-white" id="live-people-count">0</p>
+                  </div>
+                  <div class="dashboard-card p-4">
+                    <p class="text-xs text-slate-400">Stream Status</p>
+                    <p class="mt-2 text-sm font-semibold text-emerald-300" id="live-status">Connecting...</p>
+                  </div>
+                  <div class="dashboard-card p-4">
+                    <p class="text-xs text-slate-400">Last Updated</p>
+                    <p class="mt-2 text-sm text-slate-400" id="live-updated">Never</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+
+    <script>
+      const API_URL = 'http://localhost:5000';
+
+      async function fetchCount() {
+        try {
+          const res = await fetch(API_URL + '/api/stream/count');
+          if (!res.ok) throw new Error('no stream');
+          const j = await res.json();
+          document.getElementById('live-people-count').textContent = j.people_count;
+          document.getElementById('live-status').textContent = j.running ? 'Live' : 'Not Connected';
+          document.getElementById('live-updated').textContent = new Date().toLocaleTimeString();
+        } catch (e) {
+          document.getElementById('live-status').textContent = 'Error';
+        }
+      }
+
+      // Poll every second
+      setInterval(fetchCount, 1000);
+      fetchCount();
+
+      // Connect / Disconnect
+      async function connectStream(url) {
+        try {
+          const res = await fetch(API_URL + '/api/stream/start', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ stream_url: url })
+          });
+          if (!res.ok) {
+            const text = await res.text();
+            throw new Error(text || 'failed');
+          }
+          document.getElementById('live-stream').src = API_URL + '/api/stream/live?ts=' + Date.now();
+          document.getElementById('live-status').textContent = 'Starting...';
+        } catch (e) {
+          document.getElementById('live-status').textContent = 'Error';
+          console.error(e);
+        }
+      }
+
+      async function disconnectStream() {
+        try {
+          await fetch(API_URL + '/api/stream/stop', { method: 'POST' });
+        } catch (e) {
+          console.error(e);
+        }
+        const img = document.getElementById('live-stream');
+        img.src = '';
+        document.getElementById('live-status').textContent = 'Stopped';
+        document.getElementById('live-people-count').textContent = '0';
+      }
+
+      document.getElementById('connect-btn').addEventListener('click', () => {
+        const url = document.getElementById('stream-url').value.trim();
+        if (!url) return alert('Enter stream URL');
+        connectStream(url);
+      });
+
+      document.getElementById('disconnect-btn').addEventListener('click', () => {
+        disconnectStream();
+      });
+
+      // Refresh stream reloads the image src to reset connection
+      document.getElementById('refresh-stream').addEventListener('click', () => {
+        const img = document.getElementById('live-stream');
+        if (img.src) img.src = API_URL + '/api/stream/live?ts=' + Date.now();
+      });
+    </script>
+  </body>
+</html>

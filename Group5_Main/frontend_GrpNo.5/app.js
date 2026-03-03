@@ -3,39 +3,48 @@
 
 // Initialize app when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
-    // Check authentication for protected pages
+    // determine page and perform auth check early
     const currentPage = document.body.getAttribute('data-page');
-    const protectedPages = ['dashboard', 'analytics', 'upload-connect', 'settings'];
-    
-    if (protectedPages.includes(currentPage)) {
-        if (!AuthAPI.isAuthenticated()) {
-            window.location.href = 'login.html';
-            return;
+    const protectedPages = ['dashboard', 'analytics', 'upload-connect', 'live-camera'];
+    if (protectedPages.includes(currentPage) && !AuthAPI.isAuthenticated()) {
+        window.location.href = 'login.html';
+        return;
+    }
+
+    // always create sidebar first, before any page logic
+    // NOTE: Sidebars now hardcoded in HTML, JS generation disabled
+    // renderSidebar(currentPage);
+    // normalizeSidebar();
+
+    // Initialize page-specific functionality with error handling
+    try {
+        switch(currentPage) {
+            case 'login':
+                initLoginPage();
+                break;
+            case 'signup':
+                initSignupPage();
+                break;
+            case 'dashboard':
+                initDashboardPage();
+                break;
+            case 'analytics':
+                initAnalyticsPage();
+                break;
+            case 'upload-connect':
+                initUploadPage();
+                break;
+            case 'live-camera':
+                initLiveCameraPage();
+                break;
         }
+    } catch (error) {
+        console.error('Page initialization error:', error);
     }
 
-    // Initialize page-specific functionality
-    switch(currentPage) {
-        case 'login':
-            initLoginPage();
-            break;
-        case 'signup':
-            initSignupPage();
-            break;
-        case 'dashboard':
-            initDashboardPage();
-            break;
-        case 'analytics':
-            initAnalyticsPage();
-            break;
-        case 'upload-connect':
-            initUploadPage();
-            break;
-    }
-
-    // Initialize common functionality
+    // common handlers after page init
     initCommonHandlers();
-    
+
     // Close video/image preview buttons
     document.querySelectorAll('[data-action="close-video"]').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -61,6 +70,91 @@ function initCommonHandlers() {
         });
     });
 }
+
+// Build full aside (including logo, nav placeholder, sign out) and then render nav links
+function renderSidebar(currentPage) {
+    console.log('[DEBUG] renderSidebar called for page:', currentPage);
+    const container = document.getElementById('sidebar-container');
+    console.log('[DEBUG] sidebar container found:', !!container);
+    if (!container) {
+        console.error('[ERROR] sidebar-container not found in DOM');
+        return;
+    }
+    // Set container attributes and build internal structure
+    container.className = 'sidebar w-64 flex-col px-6 py-6 text-sm';
+    container.innerHTML = `
+          <div class="flex items-center gap-3">
+            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600/90">
+              <svg aria-hidden="true" class="h-6 w-6 text-white" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M17 20v-1a4 4 0 0 0-4-4h-1"></path>
+                <path d="M7 20v-1a4 4 0 0 1 4-4h1"></path>
+                <circle cx="9" cy="8" r="3"></circle>
+                <circle cx="16" cy="7" r="3"></circle>
+              </svg>
+            </div>
+            <div>
+              <p class="text-base font-semibold text-white">EventVision</p>
+              <p class="text-xs text-slate-400">Crowd analytics</p>
+            </div>
+          </div>
+          <nav id="sidebar-nav" class="mt-10 space-y-2"></nav>
+          <div class="mt-auto pt-8 text-xs text-slate-400">
+            <button class="flex items-center gap-2 text-slate-300" data-action="signout" type="button">
+              <span>Sign Out</span>
+            </button>
+          </div>
+    `;
+
+    // now populate links and mark active
+    const nav = document.querySelector('#sidebar-nav');
+    console.log('[DEBUG] sidebar nav found:', !!nav);
+    if (!nav) {
+        console.error('[ERROR] sidebar-nav not found after innerHTML');
+        return;
+    }
+    const links = [
+        {name: 'Dashboard', page: 'dashboard', href: 'dashboard.html'},
+        {name: 'Live Camera', page: 'live-camera', href: 'live_camera.html'},
+        {name: 'Upload', page: 'upload-connect', href: 'upload-connect.html'},
+        {name: 'Settings', page: 'settings', href: 'settings.html'}
+    ];
+    nav.innerHTML = links.map(l => {
+        const active = (l.page === currentPage) ? ' active' : '';
+        return `<a class="sidebar-link flex items-center gap-3 rounded-xl px-3 py-2${active}" data-nav="${l.page}" href="${l.href}"><span>${l.name}</span></a>`;
+    }).join('');
+    console.log('[DEBUG] renderSidebar completed successfully');
+}
+
+// ensure live link still exists for backward compatibility (will be covered by renderSidebar)
+function ensureLiveLink() {
+    const nav = document.querySelector('.sidebar nav');
+    if (!nav) return;
+    if (nav.querySelector('[data-nav="live"]')) return;
+
+    const a = document.createElement('a');
+    a.className = 'sidebar-link flex items-center gap-3 rounded-xl px-3 py-2';
+    a.setAttribute('data-nav', 'live');
+    a.href = 'live_camera.html';
+    a.innerHTML = '<span>Live Camera</span>';
+
+    const dash = nav.querySelector('[data-nav="dashboard"]');
+    if (dash && dash.parentNode === nav) {
+        nav.insertBefore(a, dash.nextSibling);
+    } else {
+        nav.appendChild(a);
+    }
+}
+
+function normalizeSidebar() {
+    const nav = document.querySelector('.sidebar nav');
+    if (!nav) return;
+    // ensure live link
+    ensureLiveLink();
+    // ensure upload text is correct
+    const uploadLink = nav.querySelector('[data-nav="upload"] span');
+    if (uploadLink) uploadLink.textContent = 'Upload';
+}
+
 
 // Login Page
 function initLoginPage() {
@@ -131,14 +225,13 @@ function initSignupPage() {
 // Dashboard Page
 function initDashboardPage() {
     loadDashboardMetrics();
-    loadHeatmap();
+    loadDensityChart();
     loadRecentAlerts();
-    loadCameras();
     
     // Refresh every 30 seconds
     setInterval(() => {
         loadDashboardMetrics();
-        loadHeatmap();
+        loadDensityChart();
         loadRecentAlerts();
     }, 30000);
 }
@@ -179,15 +272,48 @@ function updateMetricDelta(id, delta) {
     }
 }
 
-async function loadHeatmap() {
-    const result = await DashboardAPI.getHeatmap();
+async function loadDensityChart() {
+    const result = await DashboardAPI.getMetrics(24);
     
     if (result && result.ok) {
-        const zones = result.data.zones;
-        // Update heatmap visualization (simplified - you may want to enhance this)
-        const updatedEl = document.getElementById('heatmap-updated');
+        const data = result.data;
+        
+        // Use actual metrics from API
+        // Scale total attendance to 0-100 (max 20000)
+        const attendancePercent = Math.min(100, (data.total_attendance / 20000) * 100);
+        
+        // Avg density is already a percentage
+        const avgDensity = Math.min(100, data.avg_density);
+        
+        // Active alerts - scale to 0-100 (max 50 alerts)
+        const alertsPercent = Math.min(100, (data.active_alerts / 50) * 100);
+        
+        // Extract active cameras count from string like "24/24"
+        const cameraMatch = data.active_cameras.match(/(\d+)\/(\d+)/);
+        let camerasPercent = 0;
+        if (cameraMatch) {
+            camerasPercent = (parseInt(cameraMatch[1]) / parseInt(cameraMatch[2])) * 100;
+        }
+        
+        // Update chart bars
+        const updates = [
+            { densityId: 'zone-a-density', barId: 'zone-a-bar', value: data.total_attendance, percent: attendancePercent },
+            { densityId: 'zone-b-density', barId: 'zone-b-bar', value: `${avgDensity}%`, percent: avgDensity },
+            { densityId: 'zone-c-density', barId: 'zone-c-bar', value: data.active_alerts, percent: alertsPercent },
+            { densityId: 'zone-d-density', barId: 'zone-d-bar', value: data.active_cameras, percent: camerasPercent }
+        ];
+        
+        updates.forEach(update => {
+            const densityEl = document.getElementById(update.densityId);
+            const barEl = document.getElementById(update.barId);
+            
+            if (densityEl) densityEl.textContent = update.value;
+            if (barEl) barEl.style.width = `${update.percent}%`;
+        });
+        
+        const updatedEl = document.getElementById('chart-updated');
         if (updatedEl) {
-            updatedEl.textContent = `Updated: ${new Date().toLocaleTimeString()}`;
+            updatedEl.textContent = 'Live';
         }
     }
 }
