@@ -185,6 +185,9 @@ def stop_stream():
     if not stream_service:
         return jsonify({'message': 'not running'}), 200
 
+    # Capture final count so it can show up in dashboard metrics
+    final_count = int(getattr(stream_service, 'latest_count', 0))
+
     try:
         stream_service.stop()
     except Exception:
@@ -194,6 +197,20 @@ def stop_stream():
         delattr(current_app, 'streaming_service')
     except Exception:
         current_app.streaming_service = None
+
+    # Persist a record of the last count to the database so the dashboard can aggregate it
+    try:
+        if final_count > 0:
+            detection = Detection(
+                camera_id=None,
+                zone_id=None,
+                person_count=final_count,
+                density_percentage=0.0
+            )
+            db.session.add(detection)
+            db.session.commit()
+    except Exception:
+        db.session.rollback()
 
     return jsonify({'message': 'stopped'}), 200
 
