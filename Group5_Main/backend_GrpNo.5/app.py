@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from flask_socketio import SocketIO, emit
@@ -13,7 +13,7 @@ from api import api_bp
 
 load_dotenv()
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='static', static_url_path='')
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'your-secret-key-change-in-production')
 app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'jwt-secret-key-change-in-production')
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=24)
@@ -61,7 +61,8 @@ def init_db():
 
 @app.route('/')
 def index():
-    return jsonify({'message': 'Crowd Monitoring API', 'status': 'running'})
+    """Serve the login page as default"""
+    return send_from_directory('static', 'login.html')
 
 @socketio.on('connect')
 def handle_connect():
