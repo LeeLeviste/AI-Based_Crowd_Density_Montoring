@@ -537,7 +537,7 @@ function displayProcessedVideo(data) {
         const url = data.result.processed_video_url.startsWith('/api/files/')
             ? data.result.processed_video_url
             : `/api/files/${data.result.processed_video_url}`;
-        videoUrl = `http://localhost:5000${url}`;
+        videoUrl = `http://20.205.22.169:5000${url}`;
     }
     
     // Update stats
@@ -671,7 +671,7 @@ function displayProcessedImage(data) {
     
     // Get processed image URL
     const imageUrl = data.result?.processed_image_url 
-        ? `http://localhost:5000${data.result.processed_image_url}`
+        ? `http://20.205.22.169:5000${data.result.processed_image_url}`
         : null;
     
     if (imageUrl) {

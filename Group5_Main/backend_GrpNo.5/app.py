@@ -74,6 +74,12 @@ def frontend_public_asset(filename):
     return send_from_directory(os.path.join(FRONTEND_DIR, 'public'), filename)
 
 
+@app.route('/api/files/<path:filename>')
+def serve_processed_file(filename):
+    """Serve processed media files from uploads/processed."""
+    return send_from_directory(os.path.join(app.config['UPLOAD_FOLDER'], 'processed'), filename)
+
+
 @app.route('/<path:filename>')
 def frontend_file(filename):
     """Serve frontend files (html/css/js) directly from the frontend folder."""
