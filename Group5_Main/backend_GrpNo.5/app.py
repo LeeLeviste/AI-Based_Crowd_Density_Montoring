@@ -13,7 +13,10 @@ from api import api_bp
 
 load_dotenv()
 
-app = Flask(__name__, static_folder='static', static_url_path='')
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+FRONTEND_DIR = os.path.abspath(os.path.join(BASE_DIR, '..', 'frontend_GrpNo.5'))
+
+app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'your-secret-key-change-in-production')
 app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'jwt-secret-key-change-in-production')
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=24)
@@ -61,8 +64,20 @@ def init_db():
 
 @app.route('/')
 def index():
-    """Serve the login page as default"""
-    return send_from_directory('static', 'login.html')
+    """Serve the landing page as default."""
+    return send_from_directory(FRONTEND_DIR, 'index.html')
+
+
+@app.route('/public/<path:filename>')
+def frontend_public_asset(filename):
+    """Serve static assets from the frontend public directory."""
+    return send_from_directory(os.path.join(FRONTEND_DIR, 'public'), filename)
+
+
+@app.route('/<path:filename>')
+def frontend_file(filename):
+    """Serve frontend files (html/css/js) directly from the frontend folder."""
+    return send_from_directory(FRONTEND_DIR, filename)
 
 @socketio.on('connect')
 def handle_connect():

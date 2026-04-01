@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CrowdSense - AI Crowd Detection</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body class="landing-body">
+    <section class="landing-hero" aria-label="CrowdSense Hero Section">
+      <div class="landing-content">
+        <p class="landing-eyebrow">AI-Powered Detection</p>
+        <h1 class="landing-title">See the Crowd. Understand the Moment.</h1>
+        <p class="landing-subtitle">
+          CrowdSense uses real-time AI to detect, count, and analyze people in any
+          environment - from events to public spaces.
+        </p>
+
+        <div class="landing-actions">
+          <a class="landing-btn landing-btn-primary" href="signup.html">Get Started</a>
+        </div>
+
+        <p class="landing-stats">97% Accuracy · Real-Time · Edge Ready</p>
+      </div>
+    </section>
+
+    <section class="landing-section landing-section-works" aria-label="How CrowdSense Works">
+      <div class="landing-wrap">
+        <h2 class="landing-section-title center reveal">How CrowdSense Works</h2>
+        <p class="landing-section-sub center reveal">Three simple steps from raw footage to actionable insight.</p>
+
+        <div class="works-grid">
+          <article class="works-card reveal">
+            <span class="works-step-watermark">01</span>
+            <span class="works-icon works-icon-feed" aria-hidden="true"></span>
+            <h3>Connect Your Feed</h3>
+            <p>Plug in any IP camera, CCTV, or video stream in seconds.</p>
+          </article>
+
+          <article class="works-card reveal">
+            <span class="works-step-watermark">02</span>
+            <span class="works-icon works-icon-ai" aria-hidden="true"></span>
+            <h3>AI Detects in Real-Time</h3>
+            <p>Our model identifies and tracks every individual with bounding box precision.</p>
+          </article>
+
+          <article class="works-card reveal">
+            <span class="works-step-watermark">03</span>
+            <span class="works-icon works-icon-insight" aria-hidden="true"></span>
+            <h3>Get Instant Insights</h3>
+            <p>View live counts, heatmaps, and alerts on your dashboard.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="landing-section landing-section-features" aria-label="CrowdSense Features">
+      <div class="landing-wrap">
+        <h2 class="landing-section-title reveal">Everything You Need to Monitor Smarter</h2>
+
+        <div class="features-grid">
+          <article class="feature-card reveal">
+            <span class="feature-icon feature-icon-1" aria-hidden="true"></span>
+            <h3>Real-Time Detection</h3>
+            <p>Identify individuals frame-by-frame with &lt;50ms latency.</p>
+          </article>
+
+          <article class="feature-card reveal">
+            <span class="feature-icon feature-icon-5" aria-hidden="true"></span>
+            <h3>Edge Deployment</h3>
+            <p>Run on-device without relying on cloud connectivity.</p>
+          </article>
+
+          <article class="feature-card reveal">
+            <span class="feature-icon feature-icon-6" aria-hidden="true"></span>
+            <h3>Data Privacy</h3>
+            <p>No footage stored. All processing is local and secure.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="landing-section landing-section-usecases" aria-label="CrowdSense Use Cases">
+      <div class="landing-wrap">
+        <h2 class="landing-section-title center reveal">Built for Every Environment</h2>
+
+        <div class="usecase-row" role="list" aria-label="Use Cases">
+          <span class="usecase-pill reveal" role="listitem">Events &amp; Concerts</span>
+          <span class="usecase-pill reveal" role="listitem">Retail Stores</span>
+          <span class="usecase-pill reveal" role="listitem">Transport Hubs</span>
+          <span class="usecase-pill reveal" role="listitem">Smart Cities</span>
+          <span class="usecase-pill reveal" role="listitem">Campus Safety</span>
+          <span class="usecase-pill reveal" role="listitem">Public Spaces</span>
+        </div>
+
+        <div class="scale-card reveal" id="scale-card">
+          <div class="scale-copy">
+            <p class="scale-copy-title">From 10 people to 10,000 - CrowdSense scales with you.</p>
+            <a class="landing-btn landing-btn-primary" href="signup.html">Get Started</a>
+          </div>
+
+          <div class="scale-stats" id="scale-stats">
+            <div class="scale-stat-item">
+              <p class="scale-stat-number" data-target="100" data-suffix="k+">0</p>
+              <p class="scale-stat-label">Frames Analyzed</p>
+            </div>
+            <div class="scale-stat-item">
+              <p class="scale-stat-number" data-target="10" data-suffix="+">0</p>
+              <p class="scale-stat-label">Deployments</p>
+            </div>
+            <div class="scale-stat-item">
+              <p class="scale-stat-number" data-target="99" data-suffix="%">0</p>
+              <p class="scale-stat-label">Uptime</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <script>
+      (function () {
+        const statContainer = document.getElementById("scale-stats");
+        const revealElements = document.querySelectorAll(".reveal");
+
+        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+          revealElements.forEach((el) => el.classList.add("in-view"));
+        } else {
+          const revealObserver = new IntersectionObserver(
+            (entries, obs) => {
+              entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                  entry.target.classList.add("in-view");
+                  obs.unobserve(entry.target);
+                }
+              });
+            },
+            { threshold: 0.18, rootMargin: "0px 0px -8% 0px" }
+          );
+
+          revealElements.forEach((el, idx) => {
+            el.style.setProperty("--reveal-delay", `${(idx % 6) * 70}ms`);
+            revealObserver.observe(el);
+          });
+        }
+
+        if (!statContainer) return;
+
+        const counters = statContainer.querySelectorAll("[data-target]");
+        let hasAnimated = false;
+
+        const animateCounter = (el, duration) => {
+          const target = Number(el.getAttribute("data-target")) || 0;
+          const suffix = el.getAttribute("data-suffix") || "";
+          const start = performance.now();
+          const isDecimal = String(target).includes(".");
+
+          const tick = (now) => {
+            const progress = Math.min((now - start) / duration, 1);
+            const eased = 1 - Math.pow(1 - progress, 3);
+            const value = target * eased;
+            el.textContent = (isDecimal ? value.toFixed(1) : Math.floor(value)) + suffix;
+            if (progress < 1) requestAnimationFrame(tick);
+          };
+
+          requestAnimationFrame(tick);
+        };
+
+        const observer = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting && !hasAnimated) {
+                hasAnimated = true;
+                counters.forEach((counter, idx) => animateCounter(counter, 1200 + idx * 250));
+              }
+            });
+          },
+          { threshold: 0.35 }
+        );
+
+        observer.observe(statContainer);
+      })();
+    </script>
+  </body>
+</html>
